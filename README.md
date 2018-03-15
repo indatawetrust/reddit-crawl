@@ -27,8 +27,10 @@ npm i --save reddit-crawl
 const reddit = require('reddit-crawl')
 
 reddit({
-  r: 'food'
-}, p => p.then(pictures => {
-  console.log(pictures)
-})
+    r: 'food'
+  },
+  p => p.then(pictures => {
+    console.log(pictures)
+  })
+)
 ```
