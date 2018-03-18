@@ -6,14 +6,15 @@ const cheerio = require('cheerio')
 const url = require('url')
 const ora = require('ora');
 
-let limit = argv.limit || 1
+let limit = (opts.limit >= 40 ? opts.limit : 40) || 1
+
 let r = argv.r || 'skyporn'
 
 const promises = []
 const spinner = ora(`Loading /r/${r} 👷`).start();
 
 const crawl = url => request(url, (err, res, body) => {
-  
+
   const $ = cheerio.load(body)
 
   $('.thing').each((ind, el) => {
@@ -25,7 +26,7 @@ const crawl = url => request(url, (err, res, body) => {
       if (url.match(/\/r/)) {
 
         request(`https://www.reddit.com${url}`, (err, res, body) => {
-          
+
           if (body) {
             const $$ = cheerio.load(body)
 
@@ -46,17 +47,18 @@ const crawl = url => request(url, (err, res, body) => {
 
   if (--limit < 0) {
     Promise.all(promises).then(data => data.filter(img => img)).then(pictures => {
-      
+
       spinner.stop()
       console.log(JSON.stringify(pictures))
 
     })
   } else {
+
     if ($('.next-button a').length) {
       crawl($('.next-button a').attr('href'))
-    } else { 
+    } else {
       Promise.all(promises).then(data => data.filter(img => img)).then(pictures => {
-        
+
         spinner.stop()
         console.log(JSON.stringify(pictures))
 
