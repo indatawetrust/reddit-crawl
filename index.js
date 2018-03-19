@@ -8,7 +8,7 @@ module.exports = (opts, callback) => {
 
   opts = opts || {}
 
-  let limit = (opts.limit >= 40 ? opts.limit : 40) || 1
+  let limit = opts.limit ? (opts.limit >= 40 ? opts.limit : 40) : 1
   const total = limit
   const r = opts.r || 'skyporn'
   const getPage = opts.getPage || false

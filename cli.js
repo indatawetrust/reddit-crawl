@@ -6,7 +6,7 @@ const cheerio = require('cheerio')
 const url = require('url')
 const ora = require('ora');
 
-let limit = (opts.limit >= 40 ? opts.limit : 40) || 1
+let limit = argv.limit ? (argv.limit >= 40 ? argv.limit : 40) : 1
 
 let r = argv.r || 'skyporn'
 
