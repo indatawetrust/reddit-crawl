@@ -8,11 +8,11 @@ module.exports = (opts, callback) => {
 
   opts = opts || {}
 
-  let limit = opts.limit ? (opts.limit >= 40 ? opts.limit : 40) : 1
+  let limit = (opts.limit <= 40 ? opts.limit : 40) || 1
   const total = limit
   const r = opts.r || 'skyporn'
   const getPage = opts.getPage || false
-  const url = opts.url
+  const pageUrl = opts.pageUrl
 
   const promises = []
 
@@ -63,7 +63,7 @@ module.exports = (opts, callback) => {
 
       }
 
-      if (url) {
+      if (pageUrl) {
         callback(Promise.all(promises).then(data => data.filter(img => img)))
       } else {
         if (--limit < 1) {
@@ -82,7 +82,7 @@ module.exports = (opts, callback) => {
 
   }
 
-  if (url) crawl(url)
+  if (pageUrl) crawl(pageUrl)
   else crawl(`https://www.reddit.com/r/${r}/`)
 
 }
