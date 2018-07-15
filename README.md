@@ -8,7 +8,7 @@ npm i -g reddit-crawl
 
 #### usage
 ```
-reddit -r earthporn -limit 2
+reddit -r earthporn --limit 2
 ```
 
 ##### -r
