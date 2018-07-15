@@ -1,88 +1,92 @@
-const request = require('request')
-const cheerio = require('cheerio')
-const url = require('url')
+const request = require('request');
+const cheerio = require('cheerio');
+const url = require('url');
+
+let images = [];
+
+const notNull = item => item;
 
 module.exports = (opts, callback) => {
+  if (!callback || typeof callback != 'function')
+    throw new Error('where is the callback?');
 
-  if (!callback || typeof callback != 'function') throw new Error('where is the callback?')
+  opts = opts || {};
 
-  opts = opts || {}
+  let limit = (opts.limit >= 40 ? 40 : opts.limit) || 1;
+  const total = limit;
+  const r = opts.r || 'skyporn';
+  const getPage = opts.getPage || false;
+  const pageUrl = opts.pageUrl;
 
-  let limit = (opts.limit <= 40 ? opts.limit : 40) || 1
-  const total = limit
-  const r = opts.r || 'skyporn'
-  const getPage = opts.getPage || false
-  const pageUrl = opts.pageUrl
-
-  const promises = []
+  const promises = [];
 
   const crawl = url => {
-
     request(url, (err, res, body) => {
-
-      const $ = cheerio.load(body)
+      const $ = cheerio.load(body);
 
       if (getPage) {
-
-        promises.push(new Promise(resolve => {
-          resolve({
-            url: $('.next-button a').attr('href'),
-            page: total-limit+1
+        promises.push(
+          new Promise(resolve => {
+            resolve({
+              url: $('.next-button a').attr('href'),
+              page: total - limit + 1,
+            });
           })
-        }))
-
+        );
       } else {
-
-        $('.thing').each((ind, el) => {
-
-          promises.push(new Promise(resolve => {
-
-            const url = ($(el).find('a.title').attr('href'))
-
-            if (url.match(/\/r/)) {
-
-              request(`https://www.reddit.com${url}`, (err, res, body) => {
-
-                if (body) {
-                  const $$ = cheerio.load(body)
-
-                  resolve($$('.preview').attr('src'))
-                } else {
-                  resolve(null)
-                }
-
-              })
-
-            } else {
-              resolve(null)
-            }
-
-          }))
-
-        })
-
+        promises.push(
+          Promise.resolve(
+            $('.expando').toArray().map(el => {
+              return $($.parseHTML($(el).data('cachedhtml')))
+                .find('.preview')
+                .attr('src');
+            })
+          )
+        );
       }
 
       if (pageUrl) {
-        callback(Promise.all(promises).then(data => data.filter(img => img)))
+        callback(
+          Promise.all(promises).then(data =>
+            data.reduce((prev, next) =>
+              prev.filter(notNull).concat(next.filter(notNull))
+            )
+          )
+        );
       } else {
         if (--limit < 1) {
-          if (getPage) callback(Promise.all(promises).then(data => data.filter(({url}) => url)))
-          else callback(Promise.all(promises).then(data => data.filter(img => img)))
+          if (getPage)
+            callback(
+              Promise.all(promises).then(data => data.filter(({url}) => url))
+            );
+          else
+            callback(
+              Promise.all(promises).then(data =>
+                data.reduce((prev, next) =>
+                  prev.filter(notNull).concat(next.filter(notNull))
+                )
+              )
+            );
         } else {
           if (!$('.next-button a').length)
-            if (getPage) callback(Promise.all(promises).then(data => data.filter(({url}) => url)))
-            else callback(Promise.all(promises).then(data => data.filter(img => img)))
-          else
-           crawl($('.next-button a').attr('href'))
+            if (getPage)
+              callback(
+                Promise.all(promises).then(data => data.filter(({url}) => url))
+              );
+            else
+              callback(
+                Promise.all(promises).then(data =>
+                  data.reduce((prev, next) =>
+                    prev.filter(notNull).concat(next.filter(notNull))
+                  )
+                )
+              );
+          else crawl($('.next-button a').attr('href'));
         }
       }
+    });
+  };
 
-    })
-
-  }
-
-  if (pageUrl) crawl(pageUrl)
-  else crawl(`https://www.reddit.com/r/${r}/`)
-
-}
+  if (pageUrl) crawl(pageUrl);
+  else crawl(`https://old.reddit.com/r/${r}/`);
+};

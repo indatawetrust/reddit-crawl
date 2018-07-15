@@ -1,6 +1,6 @@
 {
   "name": "reddit-crawl",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "reddit crawl",
   "main": "index.js",
   "scripts": {
