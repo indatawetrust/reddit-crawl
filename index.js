@@ -1,6 +1,6 @@
 const request = require('request');
 const cheerio = require('cheerio');
-const url = require('url');
+const URL = require('url');
 
 let images = [];
 
@@ -16,6 +16,7 @@ module.exports = (opts, callback) => {
   const total = limit;
   const r = opts.r || 'skyporn';
   const getPage = opts.getPage || false;
+  const info = opts.info || false;
   const pageUrl = opts.pageUrl;
 
   const promises = [];
@@ -37,9 +38,20 @@ module.exports = (opts, callback) => {
         promises.push(
           Promise.resolve(
             $('.expando').toArray().map(el => {
-              return $($.parseHTML($(el).data('cachedhtml')))
-                .find('.preview')
-                .attr('src');
+              return info
+                ? {
+                    img: $($.parseHTML($(el).data('cachedhtml')))
+                      .find('.preview')
+                      .attr('src'),
+                    title: $(el).parent().find('.top-matter .title .title').text(),
+                    link: URL.resolve(
+                      'https://old.reddit.com',
+                      $(el).parent().find('.top-matter .title .title').attr('href')
+                    )
+                  }
+                : $($.parseHTML($(el).data('cachedhtml')))
+                    .find('.preview')
+                    .attr('src');
             })
           )
         );
@@ -49,8 +61,8 @@ module.exports = (opts, callback) => {
         callback(
           Promise.all(promises).then(data =>
             data.reduce((prev, next) =>
-              prev.filter(notNull).concat(next.filter(notNull))
-            )
+              prev.concat(next)
+            ).filter(notNull)
           )
         );
       } else {
@@ -63,8 +75,8 @@ module.exports = (opts, callback) => {
             callback(
               Promise.all(promises).then(data =>
                 data.reduce((prev, next) =>
-                  prev.filter(notNull).concat(next.filter(notNull))
-                )
+                  prev.concat(next)
+                ).filter(notNull)
               )
             );
         } else {
@@ -77,8 +89,8 @@ module.exports = (opts, callback) => {
               callback(
                 Promise.all(promises).then(data =>
                   data.reduce((prev, next) =>
-                    prev.filter(notNull).concat(next.filter(notNull))
-                  )
+                    prev.concat(next)
+                  ).filter(notNull)
                 )
               );
           else crawl($('.next-button a').attr('href'));
